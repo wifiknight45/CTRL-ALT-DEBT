@@ -1,0 +1,161 @@
+import datetime
+import matplotlib.pyplot as plt
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import os
+
+# Initialize financial tracker
+def initialize_finances():
+    finances = {
+        "AGI": 0.0,
+        "Net Income": 0.0,
+        "Taxes": 0.0,
+        "SDI": 0.0,
+        "SS": 0.0,
+        "Health Plan": 0.0,
+        "Vision Plan": 0.0,
+        "Dental Plan": 0.0,
+        "Gas": 0.0,
+        "Rent": 0.0,
+        "Groceries": 0.0,
+        "Tobacco": 0.0,
+        "Phone": 0.0,
+        "Medical": 0.0,
+    }
+    return finances
+
+# Input financial data
+def input_financial_data(finances):
+    print("Enter your financial details below:")
+    for key in finances.keys():
+        while True:
+            try:
+                finances[key] = float(input(f"{key}: "))
+                break
+            except ValueError:
+                print("Please enter a valid number.")
+    return finances
+
+# Calculate remaining balance
+def calculate_balance(finances):
+    expenses = sum(value for key, value in finances.items() if key != "Net Income")
+    remaining_balance = finances["Net Income"] - expenses
+    return remaining_balance
+
+# Generate visualizations
+def generate_visualizations(finances):
+    categories = list(finances.keys())[7:]  # Exclude AGI, Net Income, Taxes, SDI, and SS
+    values = [finances[category] for category in categories]
+
+    # Weekly spending visualization
+    plt.figure(figsize=(10, 6))
+    plt.bar(categories, values)
+    plt.title("Weekly Spending Breakdown")
+    plt.xlabel("Categories")
+    plt.ylabel("Amount ($)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig("weekly_spending.png")
+    print("Weekly spending visualization saved.")
+
+    # Monthly spending visualization
+    monthly_values = [value * 4 for value in values]  # Assuming 4 weeks in a month
+    plt.figure(figsize=(10, 6))
+    plt.bar(categories, monthly_values, color="orange")
+    plt.title("Monthly Spending Breakdown")
+    plt.xlabel("Categories")
+    plt.ylabel("Amount ($)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig("monthly_spending.png")
+    print("Monthly spending visualization saved.")
+
+    # Yearly spending visualization
+    yearly_values = [value * 52 for value in values]  # Assuming 52 weeks in a year
+    plt.figure(figsize=(10, 6))
+    plt.bar(categories, yearly_values, color="green")
+    plt.title("Yearly Spending Breakdown")
+    plt.xlabel("Categories")
+    plt.ylabel("Amount ($)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig("yearly_spending.png")
+    print("Yearly spending visualization saved.")
+
+# Export data and visualizations to PDF
+def export_to_pdf(finances, balance):
+    try:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        pdf.cell(200, 10, txt="Financial Report", ln=True, align="C")
+        pdf.cell(200, 10, txt=f"Date: {datetime.datetime.now().strftime('%Y-%m-%d')}", ln=True, align="C")
+
+        pdf.ln(10)
+        for key, value in finances.items():
+            pdf.cell(0, 10, txt=f"{key}: ${value:.2f}", ln=True)
+        pdf.cell(0, 10, txt=f"Remaining Balance: ${balance:.2f}", ln=True)
+
+        # Add visualizations
+        pdf.add_page()
+        pdf.cell(200, 10, txt="Spending Visualizations", ln=True, align="C")
+        pdf.image("weekly_spending.png", x=10, y=30, w=180)
+        pdf.add_page()
+        pdf.image("monthly_spending.png", x=10, y=30, w=180)
+        pdf.add_page()
+        pdf.image("yearly_spending.png", x=10, y=30, w=180)
+
+        # Save PDF file
+        pdf_filename = "financial_report.pdf"
+        pdf.output(pdf_filename)
+        print(f"PDF file '{pdf_filename}' created.")
+        return pdf_filename
+    except ImportError:
+        print("Please install the 'fpdf' library to export PDF.")
+
+# Email the PDF
+def email_pdf(pdf_filename, recipient_email):
+    sender_email = "your_email@example.com"
+    sender_password = "your_password"
+
+    # Set up the email
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = "Financial Report with Visualizations"
+    body = "Please find attached your financial report with visualizations."
+    msg.attach(MIMEBase('application', 'octet-stream'))
+
+    # Attach the PDF
+    with open(pdf_filename, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f"attachment; filename={pdf_filename}")
+        msg.attach(part)
+
+    # Send email
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+    print(f"Email sent to {recipient_email}.")
+
+# Main program
+def main():
+    finances = initialize_finances()
+    finances = input_financial_data(finances)
+    balance = calculate_balance(finances)
+    
+    generate_visualizations(finances)
+    pdf_filename = export_to_pdf(finances, balance)
+    email_pdf(pdf_filename, "robert.hodgkiss@my.utsa.edu")  # Replace with recipient email
+
+if __name__ == "__main__":
+    main()
