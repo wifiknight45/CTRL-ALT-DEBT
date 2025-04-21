@@ -80,15 +80,15 @@ To get started, you’ll need Python and the following dependencies:
 
 ---
 
-## Future Enhancements
+## Potential Future Enhancements
 - Adding more financial categories or customizing them.
 - Providing additional visualization types like pie charts or time-series trends.
 - Integrating with cloud storage for secure data backup.
 
 ---
 
-Enjoy managing your finances effortlessly with this tool! If you encounter any issues or need further customization, feel free to reach out.
+Enjoy managing your finances effortlessly with this tool!  
 
---- 
+acknowledgements: Microsoft Copilot, Google Colab and wifiknight45 with the tunes and rudder
 
-Let me know if you’d like me to further refine this!
+
